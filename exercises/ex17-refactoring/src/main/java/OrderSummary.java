@@ -11,7 +11,7 @@ import java.util.Locale;
  * {@code OrderSummaryTest} must <strong>still pass</strong>. That is the whole
  * point of refactoring: behaviour is preserved, design improves.
  *
- * <p>Refactorings to apply (see the {@code // TODO} markers in the body):
+ * <p>Refactorings to apply (as described below):
  *
  * <ul>
  *   <li><em>Extract Method</em> (13.2) — the report-building block at the end is
@@ -43,6 +43,11 @@ import java.util.Locale;
  */
 public class OrderSummary {
 
+  private static final double TAX_RATE = 0.13;
+  private static final double DISCOUNT_THRESHOLD = 200.0;
+  private static final double DISCOUNT_RATE = 0.10;
+  private static final double PREMIUM_THRESHOLD = 100.0;
+
   /**
    * Builds a human-readable, multi-line summary of an order.
    *
@@ -56,38 +61,46 @@ public class OrderSummary {
    * @return the formatted summary, with lines separated by {@code \n}
    */
   public static String summarize(String customer, String[] itemNames, double[] itemPrices) {
-    // TODO (Slide Statements, 13.6): these three declarations are a long way from
-    //      the code that first uses them. Slide each one down to its first use.
-    double subtotal = 0.0;
-    int premiumCount = 0;
-    double discount = 0.0;
+    double subtotal = calculateSubtotal(itemPrices);
+    int premiumCount = countPremiumItems(itemPrices);
+    double discount = subtotal > DISCOUNT_THRESHOLD ? subtotal * DISCOUNT_RATE : 0.0;
+    double taxable = subtotal - discount;
+    double tax = taxable * TAX_RATE;
+    double total = taxable + tax;
+    return formatReport(customer, itemNames, itemPrices, premiumCount,
+        subtotal, discount, tax, total);
+  }
 
-    // TODO (Split Loop, 13.5): this single loop does two unrelated jobs —
-    //      accumulating the subtotal and counting premium items. Split it into
-    //      two loops, then consider Extract Method (13.2) on each one.
-    for (int i = 0; i < itemPrices.length; i++) {
-      subtotal += itemPrices[i];
-      if (itemPrices[i] >= 100.0) {
-        premiumCount++;
+  private static double calculateSubtotal(double[] prices) {
+    double subtotal = 0.0;
+    for (double price : prices) {
+      subtotal += price;
+    }
+    return subtotal;
+  }
+
+  private static int countPremiumItems(double[] prices) {
+    int count = 0;
+    for (double price : prices) {
+      if (price >= PREMIUM_THRESHOLD) {
+        count++;
       }
     }
+    return count;
+  }
 
-    // TODO: replace the magic numbers below with named constants.
-    if (subtotal > 200.0) {
-      discount = subtotal * 0.10;
-    }
-    double taxable = subtotal - discount;
-    double tax = taxable * 0.13;
-    double total = taxable + tax;
+  private static String formatItem(String name, double price) {
+    return String.format(Locale.US, "%s: $%.2f\n", name, price);
+  }
 
-    // TODO (Extract Method, 13.2): everything from here down is one job —
-    //      formatting the report. Pull it out into its own well-named method
-    //      (and the per-item line into a second one).
+  private static String formatReport(String customer, String[] itemNames,
+      double[] itemPrices, int premiumCount, double subtotal, double discount,
+      double tax, double total) {
     StringBuilder report = new StringBuilder();
     report.append("Order summary for ").append(customer).append("\n");
     report.append("----------------------\n");
     for (int i = 0; i < itemNames.length; i++) {
-      report.append(String.format(Locale.US, "%s: $%.2f\n", itemNames[i], itemPrices[i]));
+      report.append(formatItem(itemNames[i], itemPrices[i]));
     }
     report.append(String.format(Locale.US, "Items: %d\n", itemNames.length));
     report.append(String.format(Locale.US, "Premium items: %d\n", premiumCount));

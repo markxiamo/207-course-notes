@@ -103,13 +103,11 @@ public class NumberTriangle {
    * @return the root value at the location indicated by path
    */
   public int retrieve(String path) {
-    // TODO: walk the path one character at a time, starting from this object.
-    //       For each character, move to the left child (if it is 'l') or the
-    //       right child (if it is 'r'). When the path runs out, return the root
-    //       value of wherever you ended up. An empty path means "stay here".
-    //       Hint: String#charAt(int) and String#length() are all you need for the
-    //       iterative version; a recursive version can use String#substring(1).
-    return 0;
+    NumberTriangle current = this;
+    for (int i = 0; i < path.length(); i++) {
+      current = path.charAt(i) == 'l' ? current.left : current.right;
+    }
+    return current.root;
   }
 
   /**
@@ -162,34 +160,26 @@ public class NumberTriangle {
    * @throws IOException may naturally occur if an issue reading the file occurs
    */
   public static NumberTriangle loadTriangle(String fname) throws IOException {
-    // Open the file and get a BufferedReader object, whose methods are convenient
-    // to work with when reading a file line by line. See the file-reading section
-    // of the "APIs, JSON, and Files" chapter.
-    BufferedReader br = Files.newBufferedReader(Path.of(fname));
-
-    // TODO: define any variables that you want to use to keep track of things
-    //       between iterations of the loop below (for example, the row of
-    //       NumberTriangle objects that you built on the previous iteration).
-
-    // We need to return the top of the NumberTriangle, so here is a variable for it.
     NumberTriangle top = null;
-
-    String line = br.readLine();
-    while (line != null) {
-
-      // Remove this line when you are done; it is here so that the starter code
-      // prints the contents of the file when you run it.
-      System.out.println(line);
-
-      // TODO: process the line. Splitting it on spaces gives you the numbers in
-      //       this row; make a NumberTriangle for each one, then wire this row up
-      //       as the children of the previous row. Remember the aliasing: the
-      //       right child of one node is the left child of the next node over.
-
-      // read the next line
-      line = br.readLine();
+    NumberTriangle[] previous = new NumberTriangle[0];
+    try (BufferedReader reader = Files.newBufferedReader(Path.of(fname))) {
+      String line;
+      while ((line = reader.readLine()) != null) {
+        String[] values = line.trim().split("\\s+");
+        NumberTriangle[] row = new NumberTriangle[values.length];
+        for (int i = 0; i < values.length; i++) {
+          row[i] = new NumberTriangle(Integer.parseInt(values[i]));
+        }
+        if (top == null) {
+          top = row[0];
+        }
+        for (int i = 0; i < previous.length; i++) {
+          previous[i].left = row[i];
+          previous[i].right = row[i + 1];
+        }
+        previous = row;
+      }
     }
-    br.close();
     return top;
   }
 

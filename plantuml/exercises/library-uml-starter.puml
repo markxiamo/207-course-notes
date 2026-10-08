@@ -3,23 +3,6 @@ skinparam dpi 150
 skinparam classAttributeIconSize 0
 hide empty members
 
-' Your task (Chapter 8, Question 1): draw the UML class diagram for the library
-' specification — items, books, DVDs, reference-only items, members, librarians,
-' and holds.
-'
-' Define each type as a box, then connect them with the right arrows. One box
-' (Item) is filled in as an example — decide on the rest yourself. There is more
-' than one defensible answer.
-'
-' PlantUML cheat-sheet:
-'   interface Name { + method() : Type }
-'   abstract class Name { # field : Type }
-'   class Name { - field : Type }
-'   Parent    <|-- Child    ' generalization: Child extends Parent
-'   Interface <|.. Class    ' realization:    Class implements Interface
-' (Putting the parent/interface on the LEFT of the arrow keeps it on top, which
-'  is the convention used in these notes.)
-
 abstract class Item {
   - title : String
   - catalogueNumber : String
@@ -27,19 +10,70 @@ abstract class Item {
   + getCatalogueNumber() : String
 }
 
-' TODO: add boxes for Book and DVD. What differs between them — a whole class,
-'       or just the value of a loan-period field?
+interface Borrowable {
+  + getLoanPeriodDays() : int
+  + isOnLoan() : boolean
+  + borrow(member : Member) : void
+  + returnItem() : void
+  + placeHold(member : Member) : Hold
+}
 
-' TODO: reference-only items cannot be borrowed at all. Decide how to say that
-'       in the diagram: a subclass, or an interface (e.g. "Borrowable") that
-'       only some items realize?
+abstract class LoanableItem {
+  - loanPeriodDays : int
+  - borrower : Member
+  - holds : List<Hold>
+  + getLoanPeriodDays() : int
+  + isOnLoan() : boolean
+  + borrow(member : Member) : void
+  + returnItem() : void
+  + placeHold(member : Member) : Hold
+}
 
-' TODO: add Member and Librarian. What do they have in common? Add the common
-'       supertype if you think one is warranted.
+class Book
+class DVD
+class ReferenceItem
 
-' TODO: add whatever represents a hold, and connect it to the classes that need
-'       to know about it.
+note right of Book : loanPeriodDays = 21
+note right of DVD : loanPeriodDays = 7
+note right of ReferenceItem : Does not implement Borrowable.
 
-' TODO: add the arrows between all of your types.
+class Member {
+  - memberNumber : String
+  - lateFee : double
+  + login(memberNumber : String) : boolean
+  + borrow(item : Borrowable) : void
+  + placeHold(item : Borrowable) : Hold
+  + waiveLateFee() : void
+}
 
+class Librarian {
+  + addItem(catalogue : Catalogue, item : Item) : void
+  + waiveLateFee(member : Member) : void
+}
+
+class Catalogue {
+  - items : Map<String, Item>
+  + addItem(item : Item) : void
+  + findItem(catalogueNumber : String) : Item
+}
+
+class Hold {
+  - member : Member
+  - item : LoanableItem
+  + getMember() : Member
+  + getItem() : LoanableItem
+}
+
+Item <|-- LoanableItem
+Item <|-- ReferenceItem
+LoanableItem <|-- Book
+LoanableItem <|-- DVD
+Borrowable <|.. LoanableItem
+Catalogue "1" o-- "0..*" Item : indexes unique catalogue numbers
+LoanableItem "0..*" --> "0..1" Member : borrower
+LoanableItem "1" *-- "0..*" Hold : ordered holds
+Hold "0..*" --> "1" Member : requester
+Member ..> Borrowable : borrows / places holds
+Librarian ..> Catalogue : adds items
+Librarian ..> Member : waives late fees
 @enduml

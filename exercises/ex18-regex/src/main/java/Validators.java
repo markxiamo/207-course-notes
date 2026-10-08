@@ -20,8 +20,7 @@ public class Validators {
    * @return true iff input is a valid email address
    */
   public static boolean isEmail(String input) {
-    // TODO: return input.matches("...") with an appropriate pattern.
-    return false;
+    return input.matches("[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}");
   }
 
   /**
@@ -33,8 +32,7 @@ public class Validators {
    * @return true iff input matches the phone-number pattern
    */
   public static boolean isPhoneNumber(String input) {
-    // TODO
-    return false;
+    return input.matches("\\d{3}-\\d{3}-\\d{4}");
   }
 
   /**
@@ -46,7 +44,6 @@ public class Validators {
    * @return true iff input is a valid Java identifier
    */
   public static boolean isJavaVariableName(String input) {
-    // TODO
-    return false;
+    return input.matches("[A-Za-z_$][A-Za-z0-9_$]*");
   }
 }
